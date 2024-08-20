@@ -18,7 +18,7 @@ const tokenBucketCreator: () => TokenBucket = () => ({
 });
 
 export class LeakyTokenBucket {
-  constructor(readonly maxTokens: number, private leakRateInMs = 1000) {
+  constructor(readonly maxTokens: number, private leakRateInMs = 60 * 60 *  1000) {
     setInterval(() => {
       this.tokensPerUser.forEach((_tokens, username) => {
         this.leak(username);
@@ -33,17 +33,21 @@ export class LeakyTokenBucket {
     return this.tokensPerUser.getOrCreate(username, tokenBucketCreator);
   }
 
-  add(username: string) {
+  add(username: string, amount = 1) {
+    if (amount <= 0 || amount > this.maxTokens) {
+      throw new RangeError("Invalid amount.");
+    }
+
     const tokenBucket = this.tokensPerUser.getOrCreate(
       username,
       tokenBucketCreator
     );
 
-    if (tokenBucket.tokens + 1 > this.maxTokens) {
+    if (tokenBucket.tokens + amount > this.maxTokens) {
       throw new RangeError("Token bucket is full.");
     }
 
-    tokenBucket.tokens++;
+    tokenBucket.tokens;
     return tokenBucket;
   }
 
@@ -61,5 +65,3 @@ export class LeakyTokenBucket {
     return tokenBucket;
   }
 }
-
-const leakyBucket = new LeakyTokenBucket(10);

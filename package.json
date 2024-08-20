@@ -3,10 +3,12 @@
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
+    "@sinonjs/fake-timers": "^11.2.2",
     "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/koa": "^2.15.0",
-    "@types/koa__router": "^12.0.4"
+    "@types/koa__router": "^12.0.4",
+    "@types/sinonjs__fake-timers": "^8.1.5"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
