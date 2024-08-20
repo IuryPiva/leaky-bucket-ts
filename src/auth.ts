@@ -3,8 +3,7 @@ import type Application from "koa";
 import { UserSchema, usersMap, type User } from "./users";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-
-const SECRET_KEY = "secret";
+import { env } from "../env";
 
 export const authMiddleware: Application.Middleware<{ user?: User }> = async (
   ctx
@@ -21,7 +20,7 @@ export const authMiddleware: Application.Middleware<{ user?: User }> = async (
     return ctx.throw(401, "Unauthorized");
   }
 
-  jwt.verify(token, SECRET_KEY, (err, jwtPayload) => {
+  jwt.verify(token, env.SECRET_KEY, (err, jwtPayload) => {
     if (err || !jwtPayload) return ctx.throw(403);
 
     const userPayload = z.object({ username: z.string() }).parse(jwtPayload);
@@ -33,17 +32,20 @@ export const authMiddleware: Application.Middleware<{ user?: User }> = async (
 
 export const loginRouter = new Router();
 
-loginRouter.post("/login", (ctx) => {
+loginRouter.post("/login", async (ctx) => {
   try {
     const body = ctx.request.body;
     const userRequested = UserSchema.parse(body);
 
     const user = usersMap.get(userRequested.username);
 
-    if (!user || user.password !== userRequested.password)
+    if (
+      !user ||
+      (await Bun.password.verify(userRequested.password, user?.password))
+    )
       throw new Error("Invalid credentials");
 
-    const token = jwt.sign({ username: user.username }, SECRET_KEY, {
+    const token = jwt.sign({ username: user.username }, env.SECRET_KEY, {
       expiresIn: "1h",
     });
 
